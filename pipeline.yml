@@ -1,0 +1,46 @@
+---
+groups:
+- name: all
+  jobs:
+  - test-s3-build-resource
+
+resources:
+- name: test-s3-resource
+  type: git
+  source:
+    uri: https://github.com/sboorlagadda/test-s3-resource.git
+    branch: master
+- name: s3-resource
+  type: s3
+  source:
+    access_key_id: &aws-access-key {{aws-access-key}}
+    secret_access_key: &aws-secret-access-key {{aws-secret-key}}
+    region_name: &aws-region {{aws-region}}
+    regexp: build-(.*).jar
+    bucket: sboorlagadda-builds
+    private: true
+- name: version
+  type: semver
+  source:
+    initial_version: 0.0.0
+    bucket: sboorlagadda-versions
+    key: version
+    access_key_id: *aws-access-key
+    secret_access_key: *aws-secret-access-key
+    region_name: *aws-region
+
+jobs:
+- name: test-s3-build-resource
+  plan:
+  - get: test-s3-resource
+    trigger: true
+  - get: version
+    params: {bump: minor}
+  - task: build
+    file: test-s3-resource/build.yml
+  - put: s3-resource
+    params: 
+      file: builds/build-*.jar
+  - put: version
+    params:
+      file: version/version
