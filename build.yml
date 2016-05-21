@@ -9,7 +9,7 @@ image_resource:
 
 inputs:
 - name: test-s3-resource
-- name: apigateway-version
+- name: version
 
 outputs:
 - name: builds
